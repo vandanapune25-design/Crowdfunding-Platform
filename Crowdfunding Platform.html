@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AKKUISHU | Sovereign Venture Terminal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand: #6366f1;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --surface: rgba(15, 23, 42, 0.95);
+            --border: rgba(255, 255, 255, 0.1);
+            --text: #f8fafc;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        body { 
+            background: #020617; color: var(--text);
+            background-image: linear-gradient(rgba(2, 6, 23, 0.85), rgba(2, 6, 23, 0.85)), 
+                              url('https://images.unsplash.com/photo-1551288049-bbbda536339a?q=80&w=2070&auto=format&fit=crop');
+            background-size: cover; background-position: center; background-attachment: fixed;
+            height: 100vh; overflow: hidden;
+        }
+
+        /* --- AUTH --- */
+        #page-auth { height: 100vh; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(15px); }
+        .auth-card { background: var(--surface); padding: 50px; border-radius: 32px; border: 1px solid var(--border); width: 450px; text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.6); }
+
+        /* --- LAYOUT --- */
+        #page-terminal { display: none; height: 100vh; flex-direction: column; }
+        nav { padding: 18px 40px; background: rgba(15, 23, 42, 0.98); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .main-layout { display: grid; grid-template-columns: 280px 1fr 340px; flex: 1; overflow: hidden; }
+        
+        /* --- SIDEBAR & NAV --- */
+        .sidebar { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); border-right: 1px solid var(--border); padding: 30px 15px; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 12px; color: #94a3b8; cursor: pointer; transition: 0.2s; margin-bottom: 8px; font-weight: 600; }
+        .nav-item:hover, .nav-item.active { background: var(--brand); color: white; }
+
+        /* --- CARDS & UI --- */
+        .scroll-area { padding: 35px; overflow-y: auto; background: rgba(0,0,0,0.2); }
+        .card { background: rgba(30, 41, 59, 0.7); border: 1px solid var(--border); padding: 25px; border-radius: 20px; margin-bottom: 20px; transition: 0.3s; }
+        .tag { font-size: 0.6rem; font-weight: 800; padding: 4px 10px; border-radius: 6px; text-transform: uppercase; margin-right: 8px; }
+        
+        .btn { padding: 12px 20px; border-radius: 12px; border: none; font-weight: 800; cursor: pointer; transition: 0.3s; font-size: 0.85rem; }
+        .btn-primary { background: var(--brand); color: white; width: 100%; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: white; width: 100%; }
+        
+        /* --- RISK ENGINE STYLES --- */
+        .risk-bar { height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-top: 10px; overflow: hidden; }
+        .risk-fill { height: 100%; border-radius: 10px; }
+
+        .ledger-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .ledger-table th { text-align: left; font-size: 0.65rem; color: #94a3b8; padding: 10px; border-bottom: 1px solid var(--border); }
+        .ledger-table td { padding: 15px 10px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+
+    <section id="page-auth">
+        <div class="auth-card">
+            <h1 style="letter-spacing: -2px; font-size: 2.5rem; margin-bottom: 5px;">AKKU<span style="color:var(--brand)">ISHU</span></h1>
+            <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 30px; letter-spacing: 1px;">Sovereign Wealth Management Terminal</p>
+            <input type="text" id="auth-user" placeholder="Access Key / Manager Name" style="width:100%; padding:15px; background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:12px; color:white; margin-bottom:20px;">
+            <button class="btn btn-primary" onclick="doLogin()">Secure Login</button>
+        </div>
+    </section>
+
+    <section id="page-terminal">
+        <nav>
+            <div style="font-weight: 900; font-size: 1.5rem; letter-spacing: -1px;">AKKU<span style="color:var(--brand)">ISHU</span></div>
+            <div style="display: flex; gap: 40px; align-items: center;">
+                <div style="text-align: right;">
+                    <small style="font-size: 0.6rem; opacity: 0.6; font-weight: 800;">PORTFOLIO VALUE (USD)</small>
+                    <div id="wall-display" style="color: var(--success); font-weight: 800; font-size: 1.3rem;">$0.00</div>
+                </div>
+                <button class="btn btn-outline" style="width:auto; padding: 8px 20px;" onclick="resetSystem()">System Reset</button>
+            </div>
+        </nav>
+
+        <div class="main-layout">
+            <aside class="sidebar">
+                <div class="nav-item active" id="nav-market" onclick="switchTab('market')">🌐 Opportunity Hub</div>
+                <div class="nav-item" id="nav-portfolio" onclick="switchTab('portfolio')">💼 Asset Ledger</div>
+                <div class="nav-item" id="nav-risk" onclick="switchTab('risk')">⚠️ Risk Monitoring</div>
+                
+                <div style="margin-top: 50px; padding: 20px; background: rgba(99, 102, 241, 0.1); border-radius: 20px; border: 1px solid var(--brand);">
+                    <small style="color: var(--brand); font-weight: 800; font-size: 0.6rem;">MARKET SENTIMENT</small>
+                    <div style="font-weight: 800; margin-top: 5px;">BULLISH (72%)</div>
+                </div>
+            </aside>
+
+            <main class="scroll-area">
+                <div id="view-market" class="tab-content">
+                    <h2 style="margin-bottom: 25px;">Strategic Deal Flow</h2>
+                    <div id="market-render"></div>
+                </div>
+
+                <div id="view-portfolio" class="tab-content" style="display:none;">
+                    <h2 style="margin-bottom: 25px;">Institutional Asset Ledger</h2>
+                    <div class="card" style="padding: 10px;">
+                        <table class="ledger-table">
+                            <thead>
+                                <tr>
+                                    <th>ASSET ENTITY</th>
+                                    <th>CLASS</th>
+                                    <th>COST BASIS</th>
+                                    <th>UNREALIZED G/L</th>
+                                    <th>ACTION</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ledger-render"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="view-risk" class="tab-content" style="display:none;">
+                    <h2 style="margin-bottom: 25px;">Portfolio Risk Exposure</h2>
+                    <div class="card">
+                        <h3>Capital at Risk (VaR)</h3>
+                        <div class="risk-bar" style="height: 20px; margin: 15px 0;">
+                            <div id="risk-total-bar" style="width: 0%; height: 100%; background: var(--brand);"></div>
+                        </div>
+                        <p id="risk-report" style="opacity: 0.7; font-size: 0.9rem;">No data found.</p>
+                    </div>
+                </div>
+            </main>
+
+            <aside class="sidebar" style="border-right:none; border-left:1px solid var(--border);">
+                <h4 style="margin-bottom: 20px;">AI Valuation Tool</h4>
+                <div class="card" style="padding: 20px;">
+                    <small>INVESTMENT ($)</small>
+                    <input type="number" id="calc-in" value="50000" oninput="runCalc()" style="width:100%; margin-top:10px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:white; padding:10px; border-radius:8px;">
+                    <small style="display:block; margin-top:15px;">ESTIMATED EXIT PAYOUT</small>
+                    <div id="calc-out" style="font-size: 1.8rem; font-weight: 900; color: var(--success); margin-top: 5px;">$250,000</div>
+                </div>
+            </aside>
+        </div>
+    </section>
+
+    <div style="position:fixed; bottom:20px; left:40px; font-size:0.6rem; opacity:0.5; letter-spacing:2px;">
+        POWERED BY <strong>AKKUISHU CORE</strong> | INTERN SUBMISSION 2026
+    </div>
+
+    <script>
+        // --- DATABASE ---
+        let state = {
+            wallet: parseFloat(localStorage.getItem('ak_wallet')) || 1000000,
+            portfolio: JSON.parse(localStorage.getItem('ak_portfolio')) || [],
+            isLogged: localStorage.getItem('ak_logged') === 'true'
+        };
+
+        const marketDeals = [
+            { id: 1, name: "Nexus AI", type: "Equity", riskScore: 85, color: "#ef4444", val: 200 },
+            { id: 2, name: "BioFlow", type: "Pref Shares", riskScore: 30, color: "#10b981", val: 45 },
+            { id: 3, name: "Mars Heavy", type: "Equity", riskScore: 95, color: "#f59e0b", val: 5000 },
+            { id: 4, name: "SecureNet", type: "Debt", riskScore: 15, color: "#6366f1", val: 120 }
+        ];
+
+        // --- CORE FUNCTIONS ---
+        function save() {
+            localStorage.setItem('ak_wallet', state.wallet);
+            localStorage.setItem('ak_portfolio', JSON.stringify(state.portfolio));
+            localStorage.setItem('ak_logged', state.isLogged);
+        }
+
+        function doLogin() {
+            if(!document.getElementById('auth-user').value) return alert("Access Key Required");
+            state.isLogged = true;
+            save();
+            location.reload();
+        }
+
+        function resetSystem() {
+            localStorage.clear();
+            location.reload();
+        }
+
+        function switchTab(view) {
+            document.querySelectorAll('.tab-content').forEach(v => v.style.display = 'none');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('view-' + view).style.display = 'block';
+            document.getElementById('nav-' + view).classList.add('active');
+            if(view === 'portfolio') renderLedger();
+            if(view === 'risk') updateRisk();
+        }
+
+        function invest(id) {
+            const deal = marketDeals.find(d => d.id === id);
+            const amt = prompt(`Allocate capital to ${deal.name}:`, "100000");
+            if(!amt || isNaN(amt)) return;
+            const val = parseFloat(amt);
+
+            if(val > state.wallet) return alert("Liquidity Error: Insufficient Funds");
+
+            state.wallet -= val;
+            state.portfolio.push({
+                uid: Date.now(),
+                ...deal,
+                costBasis: val,
+                currentVal: val * (1 + (Math.random() * 0.4 - 0.1)) // Random startup fluctuation
+            });
+            save();
+            renderMarket();
+            document.getElementById('wall-display').innerText = `$${state.wallet.toLocaleString()}`;
+            alert("Allocation Successful");
+        }
+
+        function renderMarket() {
+            const container = document.getElementById('market-render');
+            container.innerHTML = marketDeals.map(d => `
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:start;">
+                        <div>
+                            <span class="tag" style="background:${d.color}">${d.type}</span>
+                            <h3 style="margin:8px 0;">${d.name}</h3>
+                            <small style="opacity:0.6;">Valuation: $${d.val}M</small>
+                            <div class="risk-bar" style="width:150px;"><div class="risk-fill" style="width:${d.riskScore}%; background:${d.color}"></div></div>
+                            <small style="font-size:0.6rem; opacity:0.4;">RISK COEFFICIENT: ${d.riskScore}%</small>
+                        </div>
+                        <button class="btn btn-primary" style="width:auto;" onclick="invest(${d.id})">Execute Trade</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderLedger() {
+            const container = document.getElementById('ledger-render');
+            if(state.portfolio.length === 0) {
+                container.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:40px; opacity:0.5;">No active holdings in the AKKUISHU ledger.</td></tr>`;
+                return;
+            }
+            container.innerHTML = state.portfolio.map(p => {
+                const profit = p.currentVal - p.costBasis;
+                return `
+                    <tr>
+                        <td><strong>${p.name}</strong><br><small style="opacity:0.5;">${p.uid}</small></td>
+                        <td><span class="tag" style="background:rgba(255,255,255,0.1);">${p.type}</span></td>
+                        <td>$${p.costBasis.toLocaleString()}</td>
+                        <td style="color:${profit >= 0 ? 'var(--success)' : 'var(--danger)'}">
+                            ${profit >= 0 ? '▲' : '▼'} $${Math.abs(profit).toFixed(2)}
+                        </td>
+                        <td><button class="btn btn-outline" style="padding:5px 10px; font-size:0.7rem;" onclick="liquidate(${p.uid})">Exit Postion</button></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function liquidate(uid) {
+            const asset = state.portfolio.find(p => p.uid === uid);
+            if(confirm(`Liquidate ${asset.name} at current market value?`)) {
+                state.wallet += asset.currentVal;
+                state.portfolio = state.portfolio.filter(p => p.uid !== uid);
+                save();
+                renderLedger();
+                document.getElementById('wall-display').innerText = `$${state.wallet.toLocaleString()}`;
+            }
+        }
+
+        function updateRisk() {
+            const avgRisk = state.portfolio.length ? (state.portfolio.reduce((s, p) => s + p.riskScore, 0) / state.portfolio.length) : 0;
+            document.getElementById('risk-total-bar').style.width = avgRisk + '%';
+            document.getElementById('risk-total-bar').style.background = avgRisk > 70 ? 'var(--danger)' : (avgRisk > 40 ? 'var(--warning)' : 'var(--success)');
+            document.getElementById('risk-report').innerText = `Portfolio average risk is ${avgRisk.toFixed(1)}%. ${avgRisk > 60 ? 'Warning: High concentration in volatile assets.' : 'Status: Exposure levels within institutional limits.'}`;
+        }
+
+        function runCalc() {
+            const amt = document.getElementById('calc-in').value || 0;
+            document.getElementById('calc-out').innerText = `$${(amt * 5).toLocaleString()}`;
+        }
+
+        // INIT
+        if(state.isLogged) {
+            document.getElementById('page-auth').style.display = 'none';
+            document.getElementById('page-terminal').style.display = 'flex';
+            document.getElementById('wall-display').innerText = `$${state.wallet.toLocaleString()}`;
+            renderMarket();
+        }
+    </script>
+</body>
+</html>
